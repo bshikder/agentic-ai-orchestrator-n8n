@@ -1,0 +1,407 @@
+{
+  "name": "Agentic AI Orchestrator with Validation, Tools & Fallback Intelligence",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        -144
+      ],
+      "id": "472c913d-f0a3-4421-a86c-88047f57e382",
+      "name": "When clicking ‘Execute workflow’",
+      "notes": "Entry point for the workflow.\nSimulates user input and initiates the agentic decision-making pipeline."
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "={{ $json.user_input }}\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -112,
+        -352
+      ],
+      "id": "a9b1af15-e713-4ecb-9243-1c7bcdc09e01",
+      "name": "AI Orchestrator",
+      "notes": "Main AI agent responsible for executing validated tasks.\nEquipped with memory and multiple tools to perform reasoning, calculations, external lookups, and API-based tasks."
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        -112
+      ],
+      "id": "9bed8391-77ec-4790-8c89-3a3642e1a986",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "gft0SGQXvjny3ZEB",
+          "name": "OpenAi account"
+        }
+      },
+      "notes": "Shared LLM used by both primary and fallback agents.\nCentralized model configuration ensures consistent behavior and cost control."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b9937233-65ea-4a88-b7d4-3770b84ed6f3",
+              "leftValue": "={{ $json.task_type }}\n",
+              "rightValue": "knowledge_explainer",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -640,
+        -96
+      ],
+      "id": "3d197acd-1403-4e8a-9124-deeb5d3815a4",
+      "name": "Task Validation Gate",
+      "notes": "Central routing gate that determines whether a request is valid, safe, and supported.\n\nTRUE → Route to Primary AI Orchestrator\n\nFALSE → Route to Fallback Context Builder"
+    },
+    {
+      "parameters": {
+        "promptType": "=define",
+        "text": "=The user's request could not be processed because the task type was invalid.\n\nExplain the reason clearly using the fallback_reason field.\nSuggest what the user should do next.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        -464,
+        -352
+      ],
+      "id": "942799b3-c1aa-4241-a6cb-f537af612d65",
+      "name": "Fallback AI Orchestrator",
+      "notes": "Secondary AI agent designed for safe handling of invalid, ambiguous, or unsupported requests.\nOperates with restricted context and conservative behavior to prevent hallucinations or unsafe outputs."
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "demo-session"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -112,
+        -64
+      ],
+      "id": "52af40ef-187c-47f4-9009-1da65415ee6b",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -16
+      ],
+      "id": "26ed35e1-982a-44d1-a603-1896015c7d78",
+      "name": "Calculator",
+      "notes": "Performs deterministic numerical calculations to offload math from the LLM."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b199c41c-24b7-49bc-8184-152c069a87ce",
+              "name": "user_input",
+              "value": "Explain agent-based AI systems and their use cases",
+              "type": "string"
+            },
+            {
+              "id": "d8a23b42-eca7-489c-9f72-005608d85e7e",
+              "name": "task_type",
+              "value": "knowledge_explainer",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        -336
+      ],
+      "id": "0c4c0a05-b514-40d9-ac58-bb0919d652af",
+      "name": "Fallback Context Builder reset",
+      "notes": "Prepares structured fallback context when a task fails validation.\nAdds guardrails, clarifies intent ambiguity, and ensures the fallback agent receives safe, minimal, and relevant input."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        -80
+      ],
+      "id": "0c28110b-fe39-4017-af39-d6b31986b136",
+      "name": "HTTP Tool",
+      "notes": "Enables external API calls and real-time data retrieval."
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -176
+      ],
+      "id": "ec06fba8-fa2f-4b0c-bd61-274f82447bb3",
+      "name": "Search Tool",
+      "notes": "Provides up-to-date information beyond the LLM’s training data."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "80a723e0-33f1-4983-8cc2-f2bea489cb78",
+              "name": "task_type",
+              "value": "knowledge_explainer",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -816,
+        -96
+      ],
+      "id": "ebb93a9f-3515-49a2-aedf-2f93e997240f",
+      "name": "Task Type Classifier",
+      "notes": "Classifies the user request into a known task category (e.g., search, calculation, API request, general reasoning).\nOutput is used exclusively by the validation gate to control routing logic."
+    },
+    {
+      "parameters": {
+        "sessionIdType": "={{ $execution.id }}\n",
+        "sessionKey": ""
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        16,
+        -16
+      ],
+      "id": "f53c799d-40ac-4d42-9bbc-ff2f8cebd7d7",
+      "name": "Session Memory (Shared Context)",
+      "notes": "Maintains conversational continuity across agents.\nEnables both primary and fallback agents to reference prior interactions within the same execution session."
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2777d90a-379c-4253-b615-20b0cb4e6eff",
+              "name": "=fallback_reason",
+              "value": "Unsupported or invalid task type. Please try a supported task.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -400,
+        -32
+      ],
+      "id": "16cfc4e2-6166-4243-8bf2-6ddc5479d7be",
+      "name": "Fallback Reason Logger",
+      "notes": "Records the reason a request was rejected by the validation gate.\nImproves transparency, debugging, and future rule tuning."
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Fallback Context Builder reset",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Fallback AI Orchestrator",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Validation Gate": {
+      "main": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback Reason Logger",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Fallback AI Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Context Builder reset": {
+      "main": [
+        [
+          {
+            "node": "Task Type Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Task Type Classifier": {
+      "main": [
+        [
+          {
+            "node": "Task Validation Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Session Memory (Shared Context)": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Orchestrator",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback Reason Logger": {
+      "main": [
+        [
+          {
+            "node": "Fallback AI Orchestrator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0d043373-5b56-48c4-ae43-c1a42b63761f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "217fa41532a197c31ec9d1c4263adad8e8f10197089e662af130412794568aa0"
+  },
+  "id": "Y3hnmTFqLdVyh0Un",
+  "tags": []
+}
