@@ -32,11 +32,40 @@ The following diagram illustrates the agentic AI orchestration flow implemented 
    - Gracefully handles:
      - Invalid tasks
      - Unsupported intents
-   - Uses shared memory to maintain continuity
+     - 🧠 Independent Simple Memory
+     - Fully isolated from the primary agent’s memory.
 
-7. **Shared Memory**
-   - Both agents use a common session memory
-   - Ensures conversational consistency
+7. **Primary Session Memory**
+
+     - Maintains conversational context only for the primary agent.
+
+     - Not shared with fallback execution paths.
+
+     - Ensures controlled and predictable state management.
+
+
+7. **Simple Memory**
+  
+    - Stores only fallback-related interactions.
+
+    - Prevents memory leakage between execution paths.
+
+    - Reinforces safety and separation of concerns.
+    - 
+
+🧠 **Key Architectural Principles Demonstrated**
+
+- Deterministic routing before AI invocation
+
+- Explicit validation and safety gates
+
+- Tool-augmented reasoning for valid tasks
+
+- Isolated memory per agent (no shared state)
+
+- Graceful degradation instead of failure
+
+- Production-style agent orchestration patterns
 
 👤 Author
 
