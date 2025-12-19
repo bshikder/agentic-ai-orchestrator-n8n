@@ -2,7 +2,8 @@
 
 The following diagram illustrates the agentic AI orchestration flow implemented in n8n.
 
-![Architecture Diagram](diagram.png‎)
+![Architecture Diagram](diagram.png)
+
 
 ## 🔍 Diagram Walkthrough
 
