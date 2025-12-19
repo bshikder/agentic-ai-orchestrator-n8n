@@ -4,8 +4,6 @@ The following diagram illustrates the agentic AI orchestration flow implemented 
 
 ![Architecture Diagram](diagram_n8n.png‎)
 
-
-
 ## 🔍 Diagram Walkthrough
 
 1. **Trigger**
